@@ -1,4 +1,6 @@
 'use client'
+export const dynamic = 'force-dynamic'
+
 import { useState, useEffect, useCallback } from 'react'
 import { supabase, classificarDia, type Registro, type Classificacao } from '@/lib/supabase'
 import styles from './page.module.css'
