@@ -1,6 +1,8 @@
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
-export const supabase = createClientComponentClient()
+// Esse helper detecta automaticamente as variáveis NEXT_PUBLIC_ do seu .env.local
+// e cuida dos cookies de autenticação para você.
+export const supabase = createClientComponentClient();
 
 export type Registro = {
   id?: string
