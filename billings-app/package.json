@@ -9,13 +9,13 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@supabase/auth-ui-react": "^0.4.7",
+    "@supabase/auth-ui-shared": "^0.1.8",
+    "@supabase/ssr": "^0.9.0",
+    "@supabase/supabase-js": "^2.99.2",
     "next": "14.2.5",
     "react": "^18",
-    "react-dom": "^18",
-    "@supabase/supabase-js": "latest",
-    "@supabase/auth-helpers-nextjs": "latest",
-    "@supabase/auth-ui-react": "latest",
-    "@supabase/auth-ui-shared": "latest"
+    "react-dom": "^18"
   },
   "devDependencies": {
     "@types/node": "^20",

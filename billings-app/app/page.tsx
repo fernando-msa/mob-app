@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createBrowserClient } from '@supabase/ssr'
 import { classificarDia, type Registro, type Classificacao } from '@/lib/supabase'
 import styles from './page.module.css'
 
@@ -51,7 +51,10 @@ function interpDesc(cls: Classificacao) {
 }
 
 export default function Home() {
-  const supabase = createClientComponentClient()
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 

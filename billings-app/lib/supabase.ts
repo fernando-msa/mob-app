@@ -1,8 +1,10 @@
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createBrowserClient } from '@supabase/ssr';
 
-// Esse helper detecta automaticamente as variáveis NEXT_PUBLIC_ do seu .env.local
-// e cuida dos cookies de autenticação para você.
-export const supabase = createClientComponentClient();
+// Cria o cliente Supabase para uso no lado do browser (Client Components)
+export const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export type Registro = {
   id?: string
