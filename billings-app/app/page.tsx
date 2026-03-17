@@ -70,7 +70,16 @@ export default function Home() {
 
   const loadRecords = useCallback(async () => {
     setLoading(true)
-    const { data, error } = await supabase.from('registros').select('*')
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      setLoading(false)
+      return
+    }
+
+    const { data, error } = await supabase.from('registros')
+      .select('*')
+      .eq('user_id', user.id)
+    
     if (!error && data) {
       const map: Record<string, Registro> = {}
       data.forEach((r: Registro) => { map[r.data] = r })
@@ -99,20 +108,37 @@ export default function Home() {
 
   const saveDay = async () => {
     setSaving(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      setSaving(false)
+      alert("Por favor, faça login para salvar seus registros!")
+      return
+    }
+
     const key = toDateKey(currentDate)
-    const payload: Registro = { data: key, muco, sensacao, sangramento, observacoes }
+    const payload: Registro = { 
+      user_id: user.id,
+      data: key, 
+      muco, 
+      sensacao, 
+      sangramento, 
+      observacoes 
+    }
     const existing = records[key]
     let error
     if (existing?.id) {
-      ;({ error } = await supabase.from('registros').update({ ...payload, updated_at: new Date().toISOString() }).eq('id', existing.id))
+      ;({ error } = await supabase.from('registros')
+        .update({ ...payload, updated_at: new Date().toISOString() })
+        .eq('id', existing.id))
     } else {
       ;({ error } = await supabase.from('registros').insert(payload))
     }
     if (!error) {
-      setSaveMsg('Salvo!')
+      setSaveMsg('Salvo com sucesso!')
       await loadRecords()
       setTimeout(() => setSaveMsg(''), 2500)
     } else {
+      console.error("Erro ao salvar:", error.message)
       setSaveMsg('Erro ao salvar. Tente novamente.')
     }
     setSaving(false)
