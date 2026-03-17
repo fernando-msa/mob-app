@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { supabase, classificarDia, type Registro, type Classificacao } from '@/lib/supabase'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { classificarDia, type Registro, type Classificacao } from '@/lib/supabase'
 import styles from './page.module.css'
 
 const PT_MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
@@ -50,6 +51,7 @@ function interpDesc(cls: Classificacao) {
 }
 
 export default function Home() {
+  const supabase = createClientComponentClient()
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
@@ -70,7 +72,9 @@ export default function Home() {
 
   const loadRecords = useCallback(async () => {
     setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
+    
     if (!user) {
       setLoading(false)
       return
@@ -86,7 +90,7 @@ export default function Home() {
       setRecords(map)
     }
     setLoading(false)
-  }, [])
+  }, [supabase])
 
   useEffect(() => { loadRecords() }, [loadRecords])
 
@@ -108,7 +112,9 @@ export default function Home() {
 
   const saveDay = async () => {
     setSaving(true)
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
+
     if (!user) {
       setSaving(false)
       alert("Por favor, faça login para salvar seus registros!")
@@ -138,7 +144,7 @@ export default function Home() {
       await loadRecords()
       setTimeout(() => setSaveMsg(''), 2500)
     } else {
-      console.error("Erro ao salvar:", error.message)
+      console.error("Erro ao salvar:", error)
       setSaveMsg('Erro ao salvar. Tente novamente.')
     }
     setSaving(false)
