@@ -1,22 +1,6 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 
-let _client: SupabaseClient | null = null
-
-function getClient(): SupabaseClient {
-  if (!_client) {
-    _client = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'https://placeholder.supabase.co',
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? 'placeholder-key'
-    )
-  }
-  return _client
-}
-
-export const supabase = new Proxy({} as SupabaseClient, {
-  get(_target, prop) {
-    return (getClient() as any)[prop]
-  },
-})
+export const supabase = createClientComponentClient()
 
 export type Registro = {
   id?: string
