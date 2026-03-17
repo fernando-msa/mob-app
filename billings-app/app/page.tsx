@@ -230,7 +230,13 @@ export default function Home() {
             </div>
 
             <div className={styles.fieldLabel} style={{ marginTop: '1.25rem' }}>Observações</div>
-            <textarea className={styles.textarea} value={observacoes} onChange={e => setObservacoes(e.target.value)} placeholder="Desconforto, dor, outros sintomas..." rows={3} />
+            <textarea 
+              className={styles.textarea} 
+              value={observacoes} 
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setObservacoes(e.target.value)} 
+              placeholder="Desconforto, dor, outros sintomas..." 
+              rows={3} 
+            />
 
             <button className={styles.saveBtn} onClick={saveDay} disabled={saving}>
               {saving ? 'Salvando...' : 'Salvar registro'}
