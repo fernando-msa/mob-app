@@ -100,7 +100,8 @@ export default function Home() {
   const saveDay = async () => {
     setSaving(true)
     const key = toDateKey(currentDate)
-    const payload: Registro = { data: key, muco, sensacao, sangramento, observacoes }
+    const { data: { user } } = await supabase.auth.getUser()
+    const payload: Registro = { data: key, muco, sensacao, sangramento, observacoes, user_id: user?.id }
     const existing = records[key]
     let error
     if (existing?.id) {
