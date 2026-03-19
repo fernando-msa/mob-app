@@ -20,6 +20,7 @@ export const supabase = new Proxy({} as SupabaseClient, {
 
 export type Registro = {
   id?: string
+  user_id?: string
   data: string
   muco: string | null
   sensacao: string | null
