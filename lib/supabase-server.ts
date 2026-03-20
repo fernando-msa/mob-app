@@ -1,6 +1,6 @@
 // Server-only — usado em Route Handlers e Server Components
 // NÃO importar em Client Components ('use client')
-import { createServerClient } from '@supabase/ssr'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
 export async function createServerSupabaseClient() {
@@ -13,7 +13,7 @@ export async function createServerSupabaseClient() {
         getAll() {
           return cookieStore.getAll()
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
           try {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)
