@@ -1,89 +1,109 @@
-# Método de Ovulação Billings — App
+<div align="center">
 
-App pessoal para registro diário das observações do muco cervical conforme o Método de Ovulação Billings, com autenticação via Magic Link, PWA instalável e notificações push.
+# 🌿 Método de Ovulação Billings
+
+**App web para registro diário do muco cervical**  
+Autenticação segura · PWA instalável · Notificações push · Deploy gratuito
+
+[![Deploy](https://img.shields.io/badge/Vercel-Live-black?logo=vercel)](https://mob-app-five.vercel.app)
+[![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)](https://nextjs.org)
+[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?logo=supabase)](https://supabase.com)
+[![License](https://img.shields.io/badge/License-MIT-violet)](LICENSE)
+
+</div>
 
 ---
 
-## Stack
+## ✨ Funcionalidades
 
-- **Next.js 14** (App Router)
-- **Supabase** — banco de dados PostgreSQL + autenticação
-- **next-pwa** — PWA com service worker
-- **web-push** — notificações push via VAPID
+- **Magic Link** — acesso por e-mail sem senha, seguro e simples
+- **Registro diário** — muco, sensação, sangramento e observações livres
+- **Classificação automática** — Infértil 🟢 · Fértil 🟡 · Pico 🔴 · Sangramento 🔵
+- **Histórico** — visualização dos últimos 90 dias com navegação por data
+- **PWA** — instalável no celular como app nativo (Android e iOS)
+- **Notificações push** — lembrete diário configurável
+- **Multi-usuário** — dados isolados por conta via RLS no Supabase
+- **Dark mode** — segue automaticamente a preferência do sistema
 
 ---
 
-## Deploy gratuito (Supabase + Vercel)
+## 🛠 Stack
 
-### Passo 1 — Banco de dados no Supabase
+| Camada | Tecnologia |
+|---|---|
+| Framework | Next.js 14 (App Router) |
+| Banco de dados | Supabase (PostgreSQL) |
+| Autenticação | Supabase Auth — Magic Link |
+| PWA | next-pwa + Web Push API |
+| Deploy | Vercel |
+| Linguagem | TypeScript |
+
+---
+
+## 🚀 Deploy gratuito (Supabase + Vercel)
+
+### 1 — Banco de dados no Supabase
 
 1. Acesse [supabase.com](https://supabase.com) e crie um projeto
+   - Região recomendada: **South America (São Paulo)**
 2. Vá em **SQL Editor → New query**, cole o conteúdo de `supabase/schema.sql` e clique em **Run**
-3. Vá em **Authentication → URL Configuration** e adicione em **Redirect URLs**:
+3. Em **Authentication → URL Configuration**, adicione em **Redirect URLs**:
    ```
    https://SEU-PROJETO.vercel.app/auth/callback
    ```
-4. Em **Settings → API**, copie:
-   - **Project URL**
-   - **anon public key**
+4. Em **Settings → API**, copie a **Project URL** e a **anon public key**
 
-### Passo 2 — Gerar VAPID Keys (Push Notifications)
+### 2 — VAPID Keys (notificações push)
 
-No terminal, dentro da pasta do projeto:
+Na pasta do projeto:
 
 ```bash
 npx web-push generate-vapid-keys
 ```
 
-Anote os valores gerados — você precisará deles no próximo passo.
+Guarde os dois valores gerados.
 
-### Passo 3 — Deploy na Vercel
+### 3 — Deploy na Vercel
 
 1. Faça push do projeto para o GitHub
-2. Acesse [vercel.com](https://vercel.com) e importe o repositório
-3. Em **Environment Variables**, adicione:
+2. Acesse [vercel.com](https://vercel.com), importe o repositório
+3. Em **Environment Variables**, adicione as 5 variáveis:
 
-| Variável | Valor |
-|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | Project URL do Supabase |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | anon key do Supabase |
-| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Public Key gerada acima |
-| `VAPID_PRIVATE_KEY` | Private Key gerada acima |
-| `VAPID_EMAIL` | Seu e-mail (ex: `admin@seusite.com`) |
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://SEU-PROJETO.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=...
+VAPID_PRIVATE_KEY=...
+VAPID_EMAIL=seu@email.com
+```
 
-4. Clique em **Deploy**
-
-### Passo 4 — Configurar e-mail no Supabase (Magic Link)
-
-1. Vá em **Authentication → Email Templates**
-2. Confirme que o template de **Magic Link** está ativo
-3. Em projetos gratuitos, os e-mails são enviados pelo Supabase automaticamente
+4. Clique em **Deploy** — pronto 🎉
 
 ---
 
-## Desenvolvimento local
+## 💻 Desenvolvimento local
 
 ```bash
-# Instalar dependências
+# Clonar e instalar
+git clone https://github.com/fernando-msa/mob-app.git
+cd mob-app
 npm install
 
-# Criar arquivo de variáveis
+# Configurar variáveis
 cp .env.example .env.local
 # Edite .env.local com suas credenciais
 
-# Gerar VAPID keys (se ainda não fez)
-npx web-push generate-vapid-keys
-
-# Rodar localmente
+# Rodar
 npm run dev
-# Acesse http://localhost:3000
+# http://localhost:3000
 ```
 
-> **Nota:** O service worker (PWA) é desabilitado em desenvolvimento por padrão. Para testar push localmente, use `npm run build && npm start`.
+> O service worker (PWA) é desabilitado em `development` por padrão.  
+> Para testar push localmente: `npm run build && npm start`
 
 ---
 
-## Estrutura do projeto
+## 📁 Estrutura do projeto
 
 ```
 mob-app/
@@ -94,26 +114,36 @@ mob-app/
 │   ├── auth/
 │   │   ├── login/page.tsx       # Tela de Magic Link
 │   │   └── callback/route.ts    # Callback do Supabase Auth
-│   ├── globals.css
-│   ├── layout.tsx               # Layout com metadata PWA
+│   ├── globals.css              # Variáveis de tema + reset
+│   ├── layout.tsx               # Layout raiz com metadata PWA
 │   ├── page.tsx                 # App principal
-│   └── page.module.css
+│   └── page.module.css          # Estilos
 ├── lib/
-│   └── supabase.ts              # Clientes SSR (browser + server) + tipos
+│   ├── supabase.ts              # Cliente browser + tipos + classificação
+│   └── supabase-server.ts       # Cliente server (Route Handlers)
 ├── public/
-│   ├── icons/                   # Ícones PWA (72 → 512px)
+│   ├── icons/                   # Ícones PWA (72px → 512px)
 │   ├── manifest.json            # PWA manifest
 │   └── sw-push.js               # Service worker de push
 ├── supabase/
-│   └── schema.sql               # SQL com RLS por usuário
+│   ├── schema.sql               # Tabelas + RLS por usuário
+│   └── email-magic-link.html    # Template de e-mail personalizado
 ├── middleware.ts                 # Proteção de rotas autenticadas
-├── next.config.js               # Configuração com next-pwa
-├── .env.example
-└── package.json
+├── next.config.js               # Configuração PWA
+└── .env.example                 # Template de variáveis
 ```
 
 ---
 
-## Observação importante
+## 🔐 Segurança
 
-Este app é um auxiliar de registro. Para interpretação segura e personalizada, especialmente nos primeiros ciclos, consulte sempre uma instrutora certificada do Método de Ovulação Billings.
+- Autenticação via Magic Link — sem senha armazenada
+- Row Level Security (RLS) no Supabase — cada usuário acessa apenas seus próprios dados
+- Rotas protegidas via middleware Next.js
+- Chaves VAPID para push notifications autenticadas
+
+---
+
+## ⚠️ Observação
+
+Este app é um auxiliar de registro pessoal. Para interpretação segura e personalizada do ciclo, especialmente nos primeiros meses, consulte sempre uma **instrutora certificada do Método de Ovulação Billings**.
