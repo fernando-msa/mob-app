@@ -1,46 +1,16 @@
-// ─── Browser (Client Components) ────────────────────────────────────────────
+// Client-only — sem imports de next/headers
 import { createBrowserClient } from '@supabase/ssr'
 
-export function createClient() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-}
+let _client: ReturnType<typeof createBrowserClient> | null = null
 
-// Instância singleton para uso em Client Components
-let _browserClient: ReturnType<typeof createBrowserClient> | null = null
 export function getBrowserClient() {
-  if (!_browserClient) _browserClient = createClient()
-  return _browserClient
-}
-
-// ─── Server (Server Components / Route Handlers) ─────────────────────────────
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
-
-export async function createServerSupabaseClient() {
-  const cookieStore = await cookies()
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            )
-          } catch {
-            // Server Component — cookies só podem ser escritos em Route Handlers
-          }
-        },
-      },
-    }
-  )
+  if (!_client) {
+    _client = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+  }
+  return _client
 }
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
@@ -54,15 +24,6 @@ export type Registro = {
   observacoes: string
   created_at?: string
   updated_at?: string
-}
-
-export type PushSubscriptionRecord = {
-  id?: string
-  user_id: string
-  endpoint: string
-  p256dh: string
-  auth: string
-  created_at?: string
 }
 
 export type Classificacao = 'infertil' | 'fertil' | 'pico' | 'sangue' | 'nenhum'
