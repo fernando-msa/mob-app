@@ -1,49 +1,38 @@
-@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap');
-
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
 :root {
-  --cream: #FAF8F5;
-  --warm-white: #FFFFFF;
-  --stone: #E8E4DE;
-  --muted: #A09890;
-  --text: #2C2420;
-  --text-light: #6B5E58;
-  --teal: #2D7A6B;
-  --teal-light: #E4F2EF;
-  --coral: #C85A3A;
-  --coral-light: #FAEDE8;
-  --plum: #6B4E7A;
-  --plum-light: #F0EAF4;
-  --rose: #B84060;
-  --rose-light: #FAEAEE;
-  --amber: #A06020;
-  --amber-light: #FDF3E3;
-  --border: #E2DDD8;
-  --radius: 12px;
-  --radius-sm: 8px;
-  --radius-pill: 999px;
+  --bg: #f8f5ff;
+  --card: #ffffff;
+  --fg: #1a1523;
+  --muted: #6b7280;
+  --violet: #7c3aed;
+  --violet-dark: #5b21b6;
+  --border: #e5e7eb;
+  --radius: 1rem;
 }
 
-html { font-size: 16px; }
-
-body {
-  font-family: 'DM Sans', sans-serif;
-  background: var(--cream);
-  color: var(--text);
-  min-height: 100vh;
-  line-height: 1.6;
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0a1a;
+    --card: #1a1030;
+    --fg: #f3f0ff;
+    --muted: #9ca3af;
+    --border: #2d2040;
+  }
 }
 
-h1, h2, h3 {
-  font-family: 'Lora', serif;
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-button {
-  font-family: 'DM Sans', sans-serif;
-  cursor: pointer;
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  -webkit-font-smoothing: antialiased;
 }
 
-input, textarea, select {
-  font-family: 'DM Sans', sans-serif;
+input, select, textarea, button {
+  font-family: inherit;
 }

@@ -1,107 +1,119 @@
-# 🌸 Método de Ovulação Billings
+# Método de Ovulação Billings — App
 
-App pessoal para registro diário do ciclo conforme o **Método de Ovulação Billings**, aceito pela Igreja Católica Apostólica Romana.
-
-🔗 **Acesse o app:** https://mob-app-five.vercel.app
+App pessoal para registro diário das observações do muco cervical conforme o Método de Ovulação Billings, com autenticação via Magic Link, PWA instalável e notificações push.
 
 ---
 
-## Funcionalidades
+## Stack
 
-### 📝 Registro diário
-- Navegue por qualquer dia do ciclo com as setas ← →
-- Registre o **tipo de muco cervical:**
-  - Seco
-  - Nada percebido
-  - Espesso / pastoso
-  - Cremoso / branco
-  - Elástico / transparente
-  - Filante (clara de ovo)
-- Registre a **sensação na vulva:** seca, úmida, molhada, escorregadia ou lubrificada
-- Registre o **sangramento:** nenhum, leve (mancha), moderado ou intenso
-- Campo livre para **observações** adicionais (dor, desconforto, etc.)
-- Dados salvos automaticamente na nuvem via Supabase
-
-### 🔍 Interpretação automática
-O app classifica cada dia automaticamente conforme as regras do método:
-
-| Classificação | Sinais |
-|---|---|
-| 🟢 Fase infértil | Dia seco, sem muco, sensação seca |
-| 🟠 Fase fértil | Muco cremoso/pastoso, sensação úmida/molhada |
-| 🟣 Dia Pico / alta fertilidade | Muco filante, sensação escorregadia/lubrificada |
-| 🔴 Menstruação / manchas | Qualquer sangramento |
-
-Cada fase exibe uma **orientação específica** conforme o método.
-
-### 📅 Calendário do ciclo
-- Visualização mensal com pontos coloridos por categoria
-- Clique em qualquer dia para abrir o registro
-- Navegação entre meses
-
-### 📧 Notificação por e-mail
-- A cada registro salvo, um e-mail é enviado automaticamente com:
-  - Data do registro
-  - Classificação da fase
-  - Muco, sensação e sangramento registrados
-  - Observações livres
-
-### 📖 Regras do método
-Consulta rápida das principais regras do Método Billings:
-- Regra do Dia Seco
-- Identificação do Dia Pico
-- Regra do Pico (pós-pico)
-- Orientações sobre menstruação e manchas pré-menstruais
+- **Next.js 14** (App Router)
+- **Supabase** — banco de dados PostgreSQL + autenticação
+- **next-pwa** — PWA com service worker
+- **web-push** — notificações push via VAPID
 
 ---
 
-## Stack técnica
+## Deploy gratuito (Supabase + Vercel)
 
-| Camada | Tecnologia |
-|---|---|
-| Frontend | [Next.js 14](https://nextjs.org/) + TypeScript |
-| Banco de dados | [Supabase](https://supabase.com/) (PostgreSQL) |
-| Hospedagem | [Vercel](https://vercel.com/) |
-| E-mail | [Resend](https://resend.com/) via Supabase Edge Functions |
+### Passo 1 — Banco de dados no Supabase
 
----
+1. Acesse [supabase.com](https://supabase.com) e crie um projeto
+2. Vá em **SQL Editor → New query**, cole o conteúdo de `supabase/schema.sql` e clique em **Run**
+3. Vá em **Authentication → URL Configuration** e adicione em **Redirect URLs**:
+   ```
+   https://SEU-PROJETO.vercel.app/auth/callback
+   ```
+4. Em **Settings → API**, copie:
+   - **Project URL**
+   - **anon public key**
 
-## Variáveis de ambiente
+### Passo 2 — Gerar VAPID Keys (Push Notifications)
 
-Para rodar localmente, crie um arquivo `.env.local` com:
+No terminal, dentro da pasta do projeto:
 
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://seu-projeto.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=sua_anon_key
+```bash
+npx web-push generate-vapid-keys
 ```
+
+Anote os valores gerados — você precisará deles no próximo passo.
+
+### Passo 3 — Deploy na Vercel
+
+1. Faça push do projeto para o GitHub
+2. Acesse [vercel.com](https://vercel.com) e importe o repositório
+3. Em **Environment Variables**, adicione:
+
+| Variável | Valor |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Project URL do Supabase |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | anon key do Supabase |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Public Key gerada acima |
+| `VAPID_PRIVATE_KEY` | Private Key gerada acima |
+| `VAPID_EMAIL` | Seu e-mail (ex: `admin@seusite.com`) |
+
+4. Clique em **Deploy**
+
+### Passo 4 — Configurar e-mail no Supabase (Magic Link)
+
+1. Vá em **Authentication → Email Templates**
+2. Confirme que o template de **Magic Link** está ativo
+3. Em projetos gratuitos, os e-mails são enviados pelo Supabase automaticamente
 
 ---
 
 ## Desenvolvimento local
 
 ```bash
+# Instalar dependências
 npm install
+
+# Criar arquivo de variáveis
+cp .env.example .env.local
+# Edite .env.local com suas credenciais
+
+# Gerar VAPID keys (se ainda não fez)
+npx web-push generate-vapid-keys
+
+# Rodar localmente
 npm run dev
 # Acesse http://localhost:3000
 ```
 
+> **Nota:** O service worker (PWA) é desabilitado em desenvolvimento por padrão. Para testar push localmente, use `npm run build && npm start`.
+
 ---
 
-## Versões
+## Estrutura do projeto
 
-### v1.1 — atual
-- Notificação automática por e-mail a cada registro salvo
-- Correções de estabilidade no deploy (lazy init do Supabase)
-
-### v1.0
-- Registro diário de muco, sensação e sangramento
-- Interpretação automática por fase
-- Calendário mensal do ciclo
-- Regras do método para consulta rápida
-- Persistência em nuvem via Supabase
+```
+mob-app/
+├── app/
+│   ├── api/push/
+│   │   ├── subscribe/route.ts   # Salva subscription de push
+│   │   └── send/route.ts        # Envia notificação push
+│   ├── auth/
+│   │   ├── login/page.tsx       # Tela de Magic Link
+│   │   └── callback/route.ts    # Callback do Supabase Auth
+│   ├── globals.css
+│   ├── layout.tsx               # Layout com metadata PWA
+│   ├── page.tsx                 # App principal
+│   └── page.module.css
+├── lib/
+│   └── supabase.ts              # Clientes SSR (browser + server) + tipos
+├── public/
+│   ├── icons/                   # Ícones PWA (72 → 512px)
+│   ├── manifest.json            # PWA manifest
+│   └── sw-push.js               # Service worker de push
+├── supabase/
+│   └── schema.sql               # SQL com RLS por usuário
+├── middleware.ts                 # Proteção de rotas autenticadas
+├── next.config.js               # Configuração com next-pwa
+├── .env.example
+└── package.json
+```
 
 ---
 
 ## Observação importante
 
-Este app é um **auxiliar de registro**. Para interpretação segura e personalizada, especialmente nos primeiros ciclos, consulte sempre uma instrutora certificada do Método de Ovulação Billings.
+Este app é um auxiliar de registro. Para interpretação segura e personalizada, especialmente nos primeiros ciclos, consulte sempre uma instrutora certificada do Método de Ovulação Billings.
