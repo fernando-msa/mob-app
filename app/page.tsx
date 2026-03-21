@@ -7,7 +7,6 @@ import {
   getBrowserClient,
   classificarDiaIsolado,
   classificarComContexto,
-  temAlertaRelacao,
   LABEL_CLASS,
   COR_CLASS,
   type Registro,
