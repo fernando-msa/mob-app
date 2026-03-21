@@ -3,7 +3,16 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { getBrowserClient, classificarDia, temAlertaRelacao, type Registro, type Classificacao } from '@/lib/supabase'
+import {
+  getBrowserClient,
+  classificarDiaIsolado,
+  classificarComContexto,
+  temAlertaRelacao,
+  LABEL_CLASS,
+  COR_CLASS,
+  type Registro,
+  type Classificacao,
+} from '@/lib/supabase'
 import { aplicarTema, salvarTemaLocal, type Tema } from '@/lib/profile'
 import styles from './page.module.css'
 
@@ -11,23 +20,37 @@ function hojeISO() { return new Date().toISOString().split('T')[0] }
 function formatarData(iso: string) {
   const [y, m, d] = iso.split('-'); return `${d}/${m}/${y}`
 }
-const LABEL: Record<Classificacao, string> = {
-  pico: '🔴 Pico', fertil: '🟡 Fértil', infertil: '🟢 Infértil',
-  sangue: '🔵 Sangramento', nenhum: '⚪ Sem registro',
-}
-const COR: Record<Classificacao, string> = {
-  pico: '#ef4444', fertil: '#eab308', infertil: '#22c55e',
-  sangue: '#3b82f6', nenhum: '#d1d5db',
-}
+
+// Chips de observações sugeridas por categoria
+const CHIPS_SINTOMAS = [
+  { label: 'Cólica', emoji: '😣' },
+  { label: 'Dor pélvica', emoji: '⚡' },
+  { label: 'Dor ovulatória', emoji: '🎯' },
+  { label: 'Tensão mamária', emoji: '🤱' },
+  { label: 'Inchaço', emoji: '💧' },
+  { label: 'Irritabilidade', emoji: '😤' },
+  { label: 'Humor instável', emoji: '🌊' },
+  { label: 'Estresse', emoji: '😰' },
+  { label: 'Viagem', emoji: '✈️' },
+  { label: 'Doença', emoji: '🤒' },
+  { label: 'Medicação', emoji: '💊' },
+  { label: 'Sem sintomas', emoji: '✨' },
+]
+
 function urlBase64ToUint8Array(b64: string) {
   const pad = '='.repeat((4 - b64.length % 4) % 4)
   const base64 = (b64 + pad).replace(/-/g, '+').replace(/_/g, '/')
   const raw = window.atob(base64)
   return Uint8Array.from([...raw].map(c => c.charCodeAt(0)))
 }
+
 const FORM_VAZIO = {
-  data: hojeISO(), muco: null as string | null, sensacao: null as string | null,
-  sangramento: 'nenhum', relacao: false, observacoes: '',
+  data: hojeISO(),
+  muco: null as string | null,
+  sensacao: null as string | null,
+  sangramento: 'nenhum',
+  relacao: false,
+  observacoes: '',
 }
 
 export default function Home() {
@@ -42,11 +65,10 @@ export default function Home() {
   const [salvando, setSalvando] = useState(false)
   const [mensagem, setMensagem] = useState('')
   const [pushAtivo, setPushAtivo] = useState(false)
-  // Banner de instalação PWA
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
   const [mostrarInstalar, setMostrarInstalar] = useState(false)
 
-  // Auth + perfil + redireciona onboarding
+  // Auth + perfil + onboarding
   useEffect(() => {
     async function init() {
       const { data: { user } } = await supabase.auth.getUser()
@@ -63,7 +85,6 @@ export default function Home() {
       const tema = (profile.tema ?? 'violeta') as Tema
       aplicarTema(tema); salvarTemaLocal(tema)
 
-      // Verifica novidades não vistas
       const { data: changelog } = await supabase
         .from('changelog').select('versao').order('data', { ascending: false }).limit(1)
       const ultimaVersao = changelog?.[0]?.versao ?? ''
@@ -79,13 +100,12 @@ export default function Home() {
     return () => l.subscription.unsubscribe()
   }, [])
 
-  // Captura evento de instalação PWA
+  // PWA install prompt
   useEffect(() => {
     const handler = (e: Event) => {
       e.preventDefault()
       setDeferredPrompt(e)
-      const jaNegou = localStorage.getItem('mob-pwa-negou')
-      if (!jaNegou) setMostrarInstalar(true)
+      if (!localStorage.getItem('mob-pwa-negou')) setMostrarInstalar(true)
     }
     window.addEventListener('beforeinstallprompt', handler as any)
     return () => window.removeEventListener('beforeinstallprompt', handler as any)
@@ -96,26 +116,26 @@ export default function Home() {
     deferredPrompt.prompt()
     const { outcome } = await deferredPrompt.userChoice
     if (outcome === 'dismissed') localStorage.setItem('mob-pwa-negou', '1')
-    setMostrarInstalar(false)
-    setDeferredPrompt(null)
+    setMostrarInstalar(false); setDeferredPrompt(null)
   }
 
   const carregar = useCallback(async () => {
     if (!userId) return
     const { data } = await supabase.from('registros').select('*')
-      .eq('user_id', userId).order('data', { ascending: false }).limit(90)
+      .eq('user_id', userId).order('data', { ascending: true }).limit(90)
     if (data) setRegistros(data)
   }, [userId])
 
   useEffect(() => { carregar() }, [carregar])
 
+  // Preenche form com registro existente ao trocar data
   useEffect(() => {
     const existente = registros.find(r => r.data === form.data)
     if (existente) {
       setForm({
         data: existente.data, muco: existente.muco, sensacao: existente.sensacao,
         sangramento: existente.sangramento, relacao: existente.relacao ?? false,
-        observacoes: existente.observacoes,
+        observacoes: existente.observacoes ?? '',
       })
     } else {
       setForm(f => ({ ...FORM_VAZIO, data: f.data }))
@@ -148,6 +168,15 @@ export default function Home() {
     setTimeout(() => setMensagem(''), 3000)
   }
 
+  function adicionarChip(label: string) {
+    setForm(f => {
+      const atual = f.observacoes.trim()
+      const jatem = atual.toLowerCase().includes(label.toLowerCase())
+      if (jatem) return f
+      return { ...f, observacoes: atual ? `${atual}, ${label}` : label }
+    })
+  }
+
   async function salvar() {
     if (!userId) return
     setSalvando(true); setMensagem('')
@@ -161,10 +190,11 @@ export default function Home() {
     setSalvando(false)
   }
 
-  const registroHoje = registros.find(r => r.data === hojeISO()) ?? null
-  const classHoje = classificarDia(registroHoje)
-  const alertaRelacao = temAlertaRelacao(form as Registro)
-  const classForm = classificarDia(form as Registro)
+  // Info do dia atual com contexto de pós-pico
+  const registrosAsc = [...registros].sort((a, b) => a.data.localeCompare(b.data))
+  const infoHoje = classificarComContexto(registrosAsc, hojeISO())
+  const infoForm  = classificarComContexto(registrosAsc, form.data)
+
   const saudacao = (() => {
     const h = new Date().getHours()
     if (h < 12) return 'Bom dia'
@@ -183,9 +213,9 @@ export default function Home() {
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           <Link href="/calendar" className={styles.iconBtn} title="Calendário">📅</Link>
+          <Link href="/cycle" className={styles.iconBtn} title="Gráfico do ciclo">📈</Link>
           <Link href="/changelog" className={styles.iconBtn} title="Novidades" style={{ position: 'relative' }}>
-            🆕
-            {temNovidadesNaoVistas && <span className={styles.badgeNovo} />}
+            🆕{temNovidadesNaoVistas && <span className={styles.badgeNovo} />}
           </Link>
           <Link href="/profile" className={styles.avatarBtn} style={{ background: 'var(--accent)' }}>
             {nome ? nome.charAt(0).toUpperCase() : '?'}
@@ -193,7 +223,7 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Banner instalar PWA */}
+      {/* Banner PWA */}
       {mostrarInstalar && (
         <div className={styles.pwaBanner}>
           <div>
@@ -210,8 +240,17 @@ export default function Home() {
 
       {/* Resumo hoje */}
       <section className={styles.resumoCard}>
-        <p className={styles.resumoLabel}>Hoje · {formatarData(hojeISO())}</p>
-        <div className={styles.resumoBadge}>{LABEL[classHoje]}</div>
+        <div>
+          <p className={styles.resumoLabel}>Hoje · {formatarData(hojeISO())}</p>
+          {infoHoje.diasAposPico > 0 && (
+            <p className={styles.resumoPosPico}>
+              Dia {infoHoje.diasAposPico} pós-pico
+            </p>
+          )}
+        </div>
+        <div className={styles.resumoBadge}>
+          {LABEL_CLASS[infoHoje.classificacao]}
+        </div>
       </section>
 
       {/* Formulário */}
@@ -220,28 +259,47 @@ export default function Home() {
 
         <label className={styles.label}>Data</label>
         <input type="date" value={form.data} max={hojeISO()}
-          onChange={e => setForm(f => ({ ...f, data: e.target.value }))} className={styles.input} />
+          onChange={e => setForm(f => ({ ...f, data: e.target.value }))}
+          className={styles.input} />
+
+        {/* Indicador pós-pico no form */}
+        {infoForm.diasAposPico > 0 && (
+          <div className={styles.posPicoBanner}>
+            <span>🟠</span>
+            <span>
+              <strong>Dia {infoForm.diasAposPico} pós-pico</strong> — período ainda considerado fértil
+              pelo Método Billings. Consulte sua instrutora.
+            </span>
+          </div>
+        )}
 
         <label className={styles.label}>Muco</label>
         <select value={form.muco ?? ''} onChange={e => setForm(f => ({ ...f, muco: e.target.value || null }))} className={styles.input}>
           <option value="">— selecione —</option>
-          <option value="seco">Seco</option><option value="nada">Nada</option>
-          <option value="espesso">Espesso</option><option value="cremoso">Cremoso</option>
-          <option value="elastico">Elástico</option><option value="filante">Filante (em fio)</option>
+          <option value="seco">Seco</option>
+          <option value="nada">Nada</option>
+          <option value="espesso">Espesso</option>
+          <option value="cremoso">Cremoso</option>
+          <option value="elastico">Elástico</option>
+          <option value="filante">Filante (em fio)</option>
         </select>
 
         <label className={styles.label}>Sensação</label>
         <select value={form.sensacao ?? ''} onChange={e => setForm(f => ({ ...f, sensacao: e.target.value || null }))} className={styles.input}>
           <option value="">— selecione —</option>
-          <option value="seca">Seca</option><option value="umida">Úmida</option>
-          <option value="molhada">Molhada</option><option value="escorregadia">Escorregadia</option>
+          <option value="seca">Seca</option>
+          <option value="umida">Úmida</option>
+          <option value="molhada">Molhada</option>
+          <option value="escorregadia">Escorregadia</option>
           <option value="lubricada">Lubrificada</option>
         </select>
 
         <label className={styles.label}>Sangramento</label>
         <select value={form.sangramento} onChange={e => setForm(f => ({ ...f, sangramento: e.target.value }))} className={styles.input}>
-          <option value="nenhum">Nenhum</option><option value="leve">Leve</option>
-          <option value="moderado">Moderado</option><option value="intenso">Intenso</option>
+          <option value="nenhum">Nenhum</option>
+          <option value="leve">Leve</option>
+          <option value="moderado">Moderado</option>
+          <option value="intenso">Intenso</option>
         </select>
 
         <label className={styles.label}>Relação sexual</label>
@@ -251,18 +309,44 @@ export default function Home() {
           <span>{form.relacao ? 'Sim, houve relação' : 'Não houve relação'}</span>
         </div>
 
-        {alertaRelacao && (
+        {infoForm.alertaRelacao && (
           <div className={styles.alertaRelacao}>
             <span>⚠️</span>
-            <p>Relação em dia de <strong>{LABEL[classForm]}</strong>. Consulte sua instrutora para orientação personalizada.</p>
+            <p>
+              Relação em dia de <strong>{LABEL_CLASS[infoForm.classificacao]}</strong>.
+              Consulte sua instrutora para orientação personalizada.
+            </p>
           </div>
         )}
 
+        {/* Observações + chips */}
         <label className={styles.label}>Observações</label>
-        <textarea value={form.observacoes} onChange={e => setForm(f => ({ ...f, observacoes: e.target.value }))}
-          rows={3} className={styles.input} style={{ resize: 'vertical' }} placeholder="Notas adicionais…" />
+        <textarea
+          value={form.observacoes}
+          onChange={e => setForm(f => ({ ...f, observacoes: e.target.value }))}
+          rows={2}
+          className={styles.input}
+          style={{ resize: 'vertical' }}
+          placeholder="Sintomas, notas, intercorrências…"
+        />
+        <div className={styles.chips}>
+          {CHIPS_SINTOMAS.map(c => {
+            const ativo = form.observacoes.toLowerCase().includes(c.label.toLowerCase())
+            return (
+              <button
+                key={c.label}
+                type="button"
+                onClick={() => adicionarChip(c.label)}
+                className={`${styles.chip} ${ativo ? styles.chipAtivo : ''}`}
+              >
+                {c.emoji} {c.label}
+              </button>
+            )
+          })}
+        </div>
 
         {mensagem && <p className={styles.mensagem}>{mensagem}</p>}
+
         <button onClick={salvar} disabled={salvando} className={styles.btnPrimary}>
           {salvando ? 'Salvando…' : 'Salvar registro'}
         </button>
@@ -289,17 +373,22 @@ export default function Home() {
           <p className={styles.mutedText}>Nenhum registro ainda.</p>
         ) : (
           <ul className={styles.historico}>
-            {registros.slice(0, 15).map(r => {
-              const c = classificarDia(r); const alerta = temAlertaRelacao(r)
+            {[...registros].sort((a,b) => b.data.localeCompare(a.data)).slice(0, 15).map(r => {
+              const info = classificarComContexto(registrosAsc, r.data)
               return (
                 <li key={r.id} className={styles.historicoItem}
                   onClick={() => setForm(f => ({ ...f, data: r.data }))}
-                  style={{ borderLeft: `4px solid ${COR[c]}` }}>
+                  style={{ borderLeft: `4px solid ${COR_CLASS[info.classificacao]}` }}>
                   <span className={styles.historicoData}>{formatarData(r.data)}</span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-                    {alerta && <span>⚠️</span>}
-                    {r.relacao && !alerta && <span>💑</span>}
-                    <span style={{ color: COR[c], fontWeight: 600, fontSize: '0.875rem' }}>{LABEL[c]}</span>
+                    {info.alertaRelacao && <span>⚠️</span>}
+                    {r.relacao && !info.alertaRelacao && <span>💑</span>}
+                    {info.diasAposPico > 0 && (
+                      <span className={styles.badgePosPico}>+{info.diasAposPico}</span>
+                    )}
+                    <span style={{ color: COR_CLASS[info.classificacao], fontWeight: 600, fontSize: '0.875rem' }}>
+                      {LABEL_CLASS[info.classificacao]}
+                    </span>
                   </span>
                 </li>
               )
@@ -308,11 +397,12 @@ export default function Home() {
         )}
       </section>
 
-      {/* Links de rodapé */}
+      {/* Rodapé */}
       <div className={styles.rodape}>
+        <Link href="/help" className={styles.rodapeLink}>📖 Glossário</Link>
         <Link href="/feedback" className={styles.rodapeLink}>💬 Feedback</Link>
         <Link href="/changelog" className={styles.rodapeLink}>
-          🆕 Novidades {temNovidadesNaoVistas && <span className={styles.rodapeNovo}>●</span>}
+          🆕 Novidades{temNovidadesNaoVistas && <span className={styles.rodapeNovo}>●</span>}
         </Link>
       </div>
 

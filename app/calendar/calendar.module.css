@@ -261,3 +261,15 @@
   background: var(--accent);
   color: #fff;
 }
+
+/* Badge pós-pico no dia */
+.diaPosPico {
+  position: absolute;
+  bottom: 1px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.45rem;
+  font-weight: 900;
+  color: #f97316;
+  line-height: 1;
+}

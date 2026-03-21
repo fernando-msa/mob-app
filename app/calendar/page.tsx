@@ -78,6 +78,8 @@ export default function CalendarPage() {
     return d > hoje
   }
 
+  const registrosAsc = [...registros].sort((a,b) => a.data.localeCompare(b.data))
+
   return (
     <main className={styles.main}>
 
@@ -109,8 +111,8 @@ export default function CalendarPage() {
       <div className={styles.legenda}>
         {(['infertil','fertil','pico','sangue'] as Classificacao[]).map(c => (
           <div key={c} className={styles.legendaItem}>
-            <span className={styles.legendaDot} style={{ background: COR[c] }} />
-            <span>{LABEL[c].split(' ')[0]}</span>
+            <span className={styles.legendaDot} style={{ background: COR_CLASS[c] }} />
+            <span>{LABEL_CLASS[c].replace(/🔴|🟠|🟡|🟢|🔵|⚪/g,'').trim()}</span>
           </div>
         ))}
         <div className={styles.legendaItem}>
@@ -154,12 +156,13 @@ export default function CalendarPage() {
                   <span
                     className={styles.diaDot}
                     style={{
-                      background: cls !== 'nenhum' ? COR[cls] : 'transparent',
+                      background: cls !== 'nenhum' ? COR_CLASS[cls] : 'transparent',
                       border: cls === 'nenhum' ? '1.5px solid #d1d5db' : 'none',
                     }}
                   />
                 )}
                 {alerta && <span className={styles.diaAlerta}>⚠</span>}
+                {info.diasAposPico > 0 && <span className={styles.diaPosPico}>{info.diasAposPico}</span>}
                 {reg?.relacao && !alerta && <span className={styles.diaRelacao}>•</span>}
               </button>
             )
@@ -178,8 +181,8 @@ export default function CalendarPage() {
           </div>
 
           <div className={styles.detalheGrade}>
-            <Item label="Classificação" valor={LABEL[classificarDia(selecionado)]}
-              cor={COR[classificarDia(selecionado)]} />
+            <Item label="Classificação" valor={LABEL_CLASS[classificarComContexto(registrosAsc, selecionado.data).classificacao]}
+              cor={COR_CLASS[classificarComContexto(registrosAsc, selecionado.data).classificacao]} />
             <Item label="Muco" valor={selecionado.muco ?? '—'} />
             <Item label="Sensação" valor={selecionado.sensacao ?? '—'} />
             <Item label="Sangramento" valor={selecionado.sangramento ?? '—'} />
@@ -212,16 +215,17 @@ export default function CalendarPage() {
       <div className={styles.card} style={{ marginTop: '1rem' }}>
         <h3 className={styles.cardTitle}>Resumo de {MESES[mes]}</h3>
         <div className={styles.resumoGrade}>
-          {(['infertil','fertil','pico','sangue'] as Classificacao[]).map(c => {
+          {(['infertil','fertil','pos_pico','pico','sangue'] as Classificacao[]).map(c => {
             const count = Array.from({ length: total }).filter((_, i) => {
-              const r = getRegistro(i + 1)
-              return r && classificarDia(r) === c
+              const dia2 = i + 1
+              const iso2 = `${ano}-${String(mes+1).padStart(2,'0')}-${String(dia2).padStart(2,'0')}`
+              return classificarComContexto(registrosAsc, iso2).classificacao === c
             }).length
             return (
               <div key={c} className={styles.resumoItem}>
-                <span className={styles.resumoDot} style={{ background: COR[c] }} />
+                <span className={styles.resumoDot} style={{ background: COR_CLASS[c] }} />
                 <span className={styles.resumoCount}>{count}</span>
-                <span className={styles.resumoLabel}>{LABEL[c].split(' ')[0]}</span>
+                <span className={styles.resumoLabel}>{LABEL_CLASS[c].replace(/🔴|🟠|🟡|🟢|🔵|⚪/g,'').trim()}</span>
               </div>
             )
           })}
@@ -232,8 +236,9 @@ export default function CalendarPage() {
             return r?.relacao
           }).length
           const comAlerta = Array.from({ length: total }).filter((_, i) => {
-            const r = getRegistro(i + 1)
-            return r && temAlertaRelacao(r)
+            const dia2 = i + 1
+            const iso2 = `${ano}-${String(mes+1).padStart(2,'0')}-${String(dia2).padStart(2,'0')}`
+            return classificarComContexto(registrosAsc, iso2).alertaRelacao
           }).length
           return comRelacao > 0 ? (
             <p className={styles.resumoRelacao}>
