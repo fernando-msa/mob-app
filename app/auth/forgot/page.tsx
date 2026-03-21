@@ -9,17 +9,15 @@ export default function ForgotPage() {
 
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
-  const [erro, setErro] = useState('')
   const [enviado, setEnviado] = useState(false)
 
   async function handleForgot(e: React.FormEvent) {
     e.preventDefault()
-    setLoading(true); setErro('')
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    setLoading(true)
+    await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/auth/reset`,
     })
-    // Por segurança, sempre exibe sucesso (não revela se e-mail existe)
-    if (error) console.error(error)
+    // Sempre exibe sucesso — não revela se o e-mail existe
     setEnviado(true)
     setLoading(false)
   }
@@ -28,40 +26,42 @@ export default function ForgotPage() {
     <main className={styles.page}>
       <div className={styles.card}>
 
-        <div className={styles.logo}>
+        <div className={styles.header}>
           <span className={styles.logoIcon}>🔑</span>
-          <h1 className={styles.logoTitle}>Esqueceu a senha?</h1>
-          <p className={styles.logoSub}>Vamos te ajudar a recuperar o acesso</p>
+          <h1 className={styles.logoTitle}>Recuperar acesso</h1>
+          <p className={styles.logoSub}>Enviaremos um link para redefinir sua senha</p>
         </div>
 
-        {enviado ? (
-          <div className={styles.enviado}>
-            <span style={{ fontSize: '2.5rem' }}>📬</span>
-            <h2>E-mail enviado!</h2>
-            <p>
-              Se houver uma conta com <strong>{email}</strong>, você receberá
-              um link para redefinir sua senha. Verifique também a pasta de spam.
-            </p>
-            <a href="/auth/login" className={styles.linkBtn}>Voltar ao login</a>
-          </div>
-        ) : (
-          <form onSubmit={handleForgot} className={styles.form}>
-            <label className={styles.label}>E-mail da conta</label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="seu@email.com"
-              required
-              className={styles.input}
-            />
-            {erro && <p className={styles.erro}>{erro}</p>}
-            <button type="submit" disabled={loading} className={styles.btnPrimary}>
-              {loading ? 'Enviando…' : 'Enviar link de recuperação'}
-            </button>
-            <a href="/auth/login" className={styles.voltarLink}>← Voltar ao login</a>
-          </form>
-        )}
+        <div className={styles.body}>
+          {enviado ? (
+            <div className={styles.enviado}>
+              <span style={{ fontSize: '3rem' }}>📬</span>
+              <h2>E-mail enviado!</h2>
+              <p>
+                Se houver uma conta com <strong>{email}</strong>, você receberá
+                um link em instantes. Verifique também a pasta de spam.
+              </p>
+              <a href="/auth/login" className={styles.linkBtn} style={{ marginTop: '0.75rem' }}>
+                Voltar ao login
+              </a>
+            </div>
+          ) : (
+            <form onSubmit={handleForgot} className={styles.form}>
+              <label className={styles.label}>E-mail da conta</label>
+              <input
+                type="email" value={email} onChange={e => setEmail(e.target.value)}
+                placeholder="seu@email.com" required autoComplete="email"
+                className={styles.input}
+              />
+
+              <button type="submit" disabled={loading} className={styles.btnPrimary}>
+                {loading ? 'Enviando…' : 'Enviar link de recuperação'}
+              </button>
+
+              <a href="/auth/login" className={styles.voltarLink}>← Voltar ao login</a>
+            </form>
+          )}
+        </div>
 
       </div>
     </main>
