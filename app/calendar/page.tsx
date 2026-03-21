@@ -95,6 +95,16 @@ export default function CalendarPage() {
         <button onClick={() => navMes(1)} disabled={!podeAvancar} className={styles.navBtn}>›</button>
       </div>
 
+      {/* Exportar PDF */}
+      <a
+        href={`/api/export-pdf?ano=${ano}&mes=${mes}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={styles.exportBtn}
+      >
+        📄 Exportar relatório de {MESES[mes]} em PDF
+      </a>
+
       {/* Legenda */}
       <div className={styles.legenda}>
         {(['infertil','fertil','pico','sangue'] as Classificacao[]).map(c => (

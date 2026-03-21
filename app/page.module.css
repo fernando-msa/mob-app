@@ -200,3 +200,57 @@
 }
 .historicoItem:hover { opacity: 0.8; }
 .historicoData { font-size: 0.875rem; color: var(--muted); font-weight: 500; }
+
+/* Saudação */
+.saudacao { font-size: 1.125rem; font-weight: 800; color: var(--fg); line-height: 1.2; }
+.headerSub { font-size: 0.75rem; color: var(--muted); margin-top: 0.125rem; }
+
+/* Botões de ícone no header */
+.iconBtn {
+  font-size: 1.25rem; text-decoration: none; line-height: 1;
+  padding: 0.2rem; position: relative; display: inline-block;
+}
+.badgeNovo {
+  position: absolute; top: 0; right: 0;
+  width: 0.5rem; height: 0.5rem; border-radius: 50%;
+  background: #ef4444; border: 1.5px solid var(--bg);
+}
+.avatarBtn {
+  width: 2.25rem; height: 2.25rem; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.938rem; font-weight: 800; color: #fff; text-decoration: none;
+  flex-shrink: 0;
+}
+
+/* Banner PWA */
+.pwaBanner {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  background: var(--card); border: 1.5px solid var(--accent);
+  border-radius: 0.875rem; padding: 0.875rem 1rem; margin-bottom: 0.875rem;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+.pwaTitulo { font-size: 0.938rem; font-weight: 700; color: var(--fg); margin-bottom: 0.125rem; }
+.pwaSub { font-size: 0.775rem; color: var(--muted); }
+.pwaNao {
+  background: none; border: 1.5px solid var(--border); border-radius: 0.625rem;
+  padding: 0.5rem 0.875rem; font-size: 0.813rem; color: var(--muted);
+  cursor: pointer; font-weight: 600; white-space: nowrap;
+}
+.pwaSim {
+  background: var(--accent); border: none; border-radius: 0.625rem;
+  padding: 0.5rem 0.875rem; font-size: 0.813rem; color: #fff;
+  cursor: pointer; font-weight: 700; white-space: nowrap;
+}
+
+/* Rodapé */
+.rodape {
+  display: flex; justify-content: center; gap: 1.5rem;
+  padding: 1rem 0 0.5rem;
+}
+.rodapeLink {
+  font-size: 0.813rem; color: var(--muted); text-decoration: none;
+  font-weight: 500; display: flex; align-items: center; gap: 0.25rem;
+  transition: color 0.2s;
+}
+.rodapeLink:hover { color: var(--accent); }
+.rodapeNovo { color: #ef4444; font-size: 0.625rem; }

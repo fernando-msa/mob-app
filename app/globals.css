@@ -1,12 +1,55 @@
+/* ─── Paletas de cor por tema ─────────────────────────────────────────────── */
 :root {
   --bg: #f8f5ff;
   --card: #ffffff;
   --fg: #1a1523;
   --muted: #6b7280;
-  --violet: #7c3aed;
-  --violet-dark: #5b21b6;
+  --accent: #7c3aed;
+  --accent-dark: #5b21b6;
+  --accent-soft: #f3eeff;
+  --accent-border: #ede9fe;
   --border: #e5e7eb;
   --radius: 1rem;
+  /* aliases legados */
+  --violet: var(--accent);
+  --violet-dark: var(--accent-dark);
+}
+
+/* Violeta (padrão) */
+[data-theme="violeta"] {
+  --accent: #7c3aed; --accent-dark: #5b21b6;
+  --accent-soft: #f3eeff; --accent-border: #ede9fe;
+  --bg: #f8f5ff;
+}
+/* Rosa */
+[data-theme="rosa"] {
+  --accent: #db2777; --accent-dark: #9d174d;
+  --accent-soft: #fdf2f8; --accent-border: #fce7f3;
+  --bg: #fdf2f8;
+}
+/* Azul */
+[data-theme="azul"] {
+  --accent: #2563eb; --accent-dark: #1d4ed8;
+  --accent-soft: #eff6ff; --accent-border: #dbeafe;
+  --bg: #f0f5ff;
+}
+/* Verde */
+[data-theme="verde"] {
+  --accent: #16a34a; --accent-dark: #15803d;
+  --accent-soft: #f0fdf4; --accent-border: #dcfce7;
+  --bg: #f0fdf4;
+}
+/* Laranja */
+[data-theme="laranja"] {
+  --accent: #ea580c; --accent-dark: #c2410c;
+  --accent-soft: #fff7ed; --accent-border: #fed7aa;
+  --bg: #fff7ed;
+}
+/* Teal */
+[data-theme="teal"] {
+  --accent: #0d9488; --accent-dark: #0f766e;
+  --accent-soft: #f0fdfa; --accent-border: #ccfbf1;
+  --bg: #f0fdfa;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -17,13 +60,14 @@
     --muted: #9ca3af;
     --border: #2d2040;
   }
+  [data-theme="rosa"]    { --bg: #1a0814; --card: #200d18; }
+  [data-theme="azul"]    { --bg: #080f1a; --card: #0d1520; }
+  [data-theme="verde"]   { --bg: #061410; --card: #0a1f18; }
+  [data-theme="laranja"] { --bg: #1a0d06; --card: #201208; }
+  [data-theme="teal"]    { --bg: #061412; --card: #0a1f1c; }
 }
 
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
   height: 100%;
@@ -33,6 +77,4 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
-input, select, textarea, button {
-  font-family: inherit;
-}
+input, select, textarea, button { font-family: inherit; }
