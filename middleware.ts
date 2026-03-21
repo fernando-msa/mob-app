@@ -9,13 +9,9 @@ export async function middleware(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
+        getAll() { return request.cookies.getAll() },
         setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          )
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
           supabaseResponse = NextResponse.next({ request })
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
@@ -25,23 +21,18 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Atualiza a sessão (IMPORTANTE: não remover este await)
   const { data: { user } } = await supabase.auth.getUser()
-
   const { pathname } = request.nextUrl
 
-  // Rotas públicas — não precisam de autenticação
-  const publicPaths = ['/auth/login', '/auth/callback']
+  const publicPaths = ['/auth/login', '/auth/signup', '/auth/forgot', '/auth/reset', '/auth/callback']
   const isPublic = publicPaths.some(p => pathname.startsWith(p))
 
-  // Usuário não autenticado tentando acessar rota protegida
   if (!user && !isPublic) {
     const loginUrl = request.nextUrl.clone()
     loginUrl.pathname = '/auth/login'
     return NextResponse.redirect(loginUrl)
   }
 
-  // Usuário autenticado tentando acessar login
   if (user && pathname === '/auth/login') {
     const homeUrl = request.nextUrl.clone()
     homeUrl.pathname = '/'

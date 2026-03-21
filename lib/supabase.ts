@@ -21,6 +21,7 @@ export type Registro = {
   muco: string | null
   sensacao: string | null
   sangramento: string
+  relacao: boolean          // teve relação sexual no dia
   observacoes: string
   created_at?: string
   updated_at?: string
@@ -37,4 +38,11 @@ export function classificarDia(r: Registro | null): Classificacao {
   if (m === 'elastico' || m === 'cremoso' || s === 'molhada' || s === 'umida') return 'fertil'
   if (m === 'seco' || m === 'nada' || s === 'seca') return 'infertil'
   return 'nenhum'
+}
+
+// Relação em dia fértil/pico = alerta especial
+export function temAlertaRelacao(r: Registro | null): boolean {
+  if (!r || !r.relacao) return false
+  const c = classificarDia(r)
+  return c === 'fertil' || c === 'pico'
 }

@@ -1,117 +1,77 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { getBrowserClient, classificarDia, type Registro, type Classificacao } from '@/lib/supabase'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { getBrowserClient, classificarDia, temAlertaRelacao, type Registro, type Classificacao } from '@/lib/supabase'
 import styles from './page.module.css'
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-function hojeISO() {
-  return new Date().toISOString().split('T')[0]
-}
-
+function hojeISO() { return new Date().toISOString().split('T')[0] }
 function formatarData(iso: string) {
   const [y, m, d] = iso.split('-')
   return `${d}/${m}/${y}`
 }
 
-function labelClassificacao(c: Classificacao) {
-  const map: Record<Classificacao, string> = {
-    pico: '🔴 Pico',
-    fertil: '🟡 Fértil',
-    infertil: '🟢 Infértil',
-    sangue: '🔵 Sangramento',
-    nenhum: '⚪ Sem registro',
-  }
-  return map[c]
+const LABEL: Record<Classificacao, string> = {
+  pico: '🔴 Pico', fertil: '🟡 Fértil', infertil: '🟢 Infértil',
+  sangue: '🔵 Sangramento', nenhum: '⚪ Sem registro',
 }
-
 const COR: Record<Classificacao, string> = {
-  pico: '#ef4444',
-  fertil: '#eab308',
-  infertil: '#22c55e',
-  sangue: '#3b82f6',
-  nenhum: '#d1d5db',
+  pico: '#ef4444', fertil: '#eab308', infertil: '#22c55e',
+  sangue: '#3b82f6', nenhum: '#d1d5db',
 }
 
-// ─── Push helpers ─────────────────────────────────────────────────────────────
-async function registrarPush() {
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return null
-  const reg = await navigator.serviceWorker.ready
-  const existing = await reg.pushManager.getSubscription()
-  if (existing) return existing
-
-  const sub = await reg.pushManager.subscribe({
-    userVisibleOnly: true,
-    applicationServerKey: urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!),
-  })
-  return sub
+function urlBase64ToUint8Array(b64: string) {
+  const pad = '='.repeat((4 - b64.length % 4) % 4)
+  const base64 = (b64 + pad).replace(/-/g, '+').replace(/_/g, '/')
+  const raw = window.atob(base64)
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)))
 }
 
-function urlBase64ToUint8Array(base64String: string) {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
-  const rawData = window.atob(base64)
-  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)))
+const FORM_VAZIO = {
+  data: hojeISO(), muco: null as string | null, sensacao: null as string | null,
+  sangramento: 'nenhum', relacao: false, observacoes: '',
 }
 
-// ─── Componente ───────────────────────────────────────────────────────────────
 export default function Home() {
+  const router = useRouter()
   const supabase = getBrowserClient()
 
   const [userId, setUserId] = useState<string | null>(null)
   const [registros, setRegistros] = useState<Registro[]>([])
-  const [hoje, setHoje] = useState(hojeISO())
-  const [form, setForm] = useState<Omit<Registro, 'id' | 'user_id' | 'created_at' | 'updated_at'>>({
-    data: hojeISO(),
-    muco: null,
-    sensacao: null,
-    sangramento: 'nenhum',
-    observacoes: '',
-  })
+  const [form, setForm] = useState(FORM_VAZIO)
   const [salvando, setSalvando] = useState(false)
   const [mensagem, setMensagem] = useState('')
   const [pushAtivo, setPushAtivo] = useState(false)
 
-  // Autenticação
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null))
-    const { data: listener } = supabase.auth.onAuthStateChange((_e, session) => {
-      setUserId(session?.user?.id ?? null)
-    })
-    return () => listener.subscription.unsubscribe()
+    const { data: l } = supabase.auth.onAuthStateChange((_e, s) => setUserId(s?.user?.id ?? null))
+    return () => l.subscription.unsubscribe()
   }, [])
 
-  // Carrega registros
-  const carregarRegistros = useCallback(async () => {
+  const carregar = useCallback(async () => {
     if (!userId) return
-    const { data } = await supabase
-      .from('registros')
-      .select('*')
-      .eq('user_id', userId)
-      .order('data', { ascending: false })
-      .limit(90)
+    const { data } = await supabase.from('registros').select('*')
+      .eq('user_id', userId).order('data', { ascending: false }).limit(90)
     if (data) setRegistros(data)
   }, [userId])
 
-  useEffect(() => { carregarRegistros() }, [carregarRegistros])
+  useEffect(() => { carregar() }, [carregar])
 
-  // Preenche form com registro do dia selecionado (se existir)
   useEffect(() => {
     const existente = registros.find(r => r.data === form.data)
     if (existente) {
       setForm({
-        data: existente.data,
-        muco: existente.muco,
-        sensacao: existente.sensacao,
-        sangramento: existente.sangramento,
+        data: existente.data, muco: existente.muco, sensacao: existente.sensacao,
+        sangramento: existente.sangramento, relacao: existente.relacao ?? false,
         observacoes: existente.observacoes,
       })
     } else {
-      setForm(f => ({ ...f, muco: null, sensacao: null, sangramento: 'nenhum', observacoes: '' }))
+      setForm(f => ({ ...FORM_VAZIO, data: f.data }))
     }
   }, [form.data, registros])
 
-  // Verifica se push já está ativo
   useEffect(() => {
     if ('serviceWorker' in navigator && 'PushManager' in window) {
       navigator.serviceWorker.ready.then(reg =>
@@ -121,17 +81,16 @@ export default function Home() {
   }, [])
 
   async function ativarNotificacoes() {
-    const permission = await Notification.requestPermission()
-    if (permission !== 'granted') {
-      setMensagem('Permissão negada para notificações.')
-      return
-    }
-    const sub = await registrarPush()
-    if (!sub) return
+    const perm = await Notification.requestPermission()
+    if (perm !== 'granted') { setMensagem('Permissão negada.'); return }
+    const reg = await navigator.serviceWorker.ready
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!),
+    })
     const { endpoint, keys } = sub.toJSON() as any
     await fetch('/api/push/subscribe', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ endpoint, keys }),
     })
     setPushAtivo(true)
@@ -141,55 +100,46 @@ export default function Home() {
 
   async function salvar() {
     if (!userId) return
-    setSalvando(true)
-    setMensagem('')
-
+    setSalvando(true); setMensagem('')
     const existente = registros.find(r => r.data === form.data)
     const payload = { ...form, user_id: userId, updated_at: new Date().toISOString() }
-
-    let error: any
-    if (existente?.id) {
-      ({ error } = await supabase.from('registros').update(payload).eq('id', existente.id))
-    } else {
-      ({ error } = await supabase.from('registros').insert(payload))
-    }
-
-    if (error) {
-      setMensagem('Erro ao salvar: ' + error.message)
-    } else {
-      setMensagem('✅ Registro salvo!')
-      await carregarRegistros()
-      setTimeout(() => setMensagem(''), 3000)
-    }
+    const { error } = existente?.id
+      ? await supabase.from('registros').update(payload).eq('id', existente.id)
+      : await supabase.from('registros').insert(payload)
+    if (error) setMensagem('Erro: ' + error.message)
+    else { setMensagem('✅ Registro salvo!'); await carregar(); setTimeout(() => setMensagem(''), 3000) }
     setSalvando(false)
   }
 
   async function sair() {
     await supabase.auth.signOut()
-    window.location.href = '/auth/login'
+    router.push('/auth/login')
   }
 
-  const classificacaoHoje = classificarDia(registros.find(r => r.data === hoje) ?? null)
+  const registroHoje = registros.find(r => r.data === hojeISO()) ?? null
+  const classHoje = classificarDia(registroHoje)
+  const alertaRelacao = temAlertaRelacao(form as Registro)
+  const classForm = classificarDia(form as Registro)
 
   return (
     <main className={styles.main}>
       {/* Header */}
       <header className={styles.header}>
-        <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <span style={{ fontSize: '1.5rem' }}>🌿</span>
           <span className={styles.headerTitle}>Método Billings</span>
         </div>
-        <button onClick={sair} className={styles.sairBtn}>Sair</button>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <Link href="/calendar" className={styles.calBtn}>📅</Link>
+          <button onClick={sair} className={styles.sairBtn}>Sair</button>
+        </div>
       </header>
 
-      {/* Card resumo do dia */}
+      {/* Resumo hoje */}
       <section className={styles.resumoCard}>
-        <p className={styles.resumoLabel}>Hoje · {formatarData(hoje)}</p>
-        <div
-          className={styles.resumoBadge}
-          style={{ background: COR[classificacaoHoje] + '22', color: COR[classificacaoHoje] }}
-        >
-          {labelClassificacao(classificacaoHoje)}
+        <p className={styles.resumoLabel}>Hoje · {formatarData(hojeISO())}</p>
+        <div className={styles.resumoBadge} style={{ color: COR[classHoje] }}>
+          {LABEL[classHoje]}
         </div>
       </section>
 
@@ -198,13 +148,9 @@ export default function Home() {
         <h2 className={styles.cardTitle}>Registrar observação</h2>
 
         <label className={styles.label}>Data</label>
-        <input
-          type="date"
-          value={form.data}
-          max={hojeISO()}
+        <input type="date" value={form.data} max={hojeISO()}
           onChange={e => setForm(f => ({ ...f, data: e.target.value }))}
-          className={styles.input}
-        />
+          className={styles.input} />
 
         <label className={styles.label}>Muco</label>
         <select value={form.muco ?? ''} onChange={e => setForm(f => ({ ...f, muco: e.target.value || null }))} className={styles.input}>
@@ -235,15 +181,32 @@ export default function Home() {
           <option value="intenso">Intenso</option>
         </select>
 
+        {/* Campo relação */}
+        <label className={styles.label}>Relação sexual</label>
+        <div
+          className={`${styles.relacaoToggle} ${form.relacao ? styles.relacaoAtivo : ''}`}
+          onClick={() => setForm(f => ({ ...f, relacao: !f.relacao }))}
+        >
+          <div className={styles.relacaoCheck}>{form.relacao ? '✓' : ''}</div>
+          <span>{form.relacao ? 'Sim, houve relação' : 'Não houve relação'}</span>
+        </div>
+
+        {/* Alerta relação em dia fértil/pico */}
+        {alertaRelacao && (
+          <div className={styles.alertaRelacao}>
+            <span>⚠️</span>
+            <p>
+              Relação registrada em dia de <strong>{LABEL[classForm]}</strong>.
+              Consulte sua instrutora certificada para orientação personalizada.
+            </p>
+          </div>
+        )}
+
         <label className={styles.label}>Observações</label>
-        <textarea
-          value={form.observacoes}
+        <textarea value={form.observacoes}
           onChange={e => setForm(f => ({ ...f, observacoes: e.target.value }))}
-          rows={3}
-          className={styles.input}
-          style={{ resize: 'vertical' }}
-          placeholder="Notas adicionais…"
-        />
+          rows={3} className={styles.input} style={{ resize: 'vertical' }}
+          placeholder="Notas adicionais…" />
 
         {mensagem && <p className={styles.mensagem}>{mensagem}</p>}
 
@@ -252,11 +215,11 @@ export default function Home() {
         </button>
       </section>
 
-      {/* Notificações push */}
+      {/* Push */}
       {!pushAtivo && (
         <section className={styles.card}>
           <h2 className={styles.cardTitle}>🔔 Lembretes diários</h2>
-          <p className={styles.mutedText}>Ative notificações para receber um lembrete diário para registrar suas observações.</p>
+          <p className={styles.mutedText}>Ative notificações para receber um lembrete diário.</p>
           <button onClick={ativarNotificacoes} className={styles.btnSecondary}>
             Ativar notificações
           </button>
@@ -265,23 +228,30 @@ export default function Home() {
 
       {/* Histórico */}
       <section className={styles.card}>
-        <h2 className={styles.cardTitle}>Histórico recente</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h2 className={styles.cardTitle} style={{ margin: 0 }}>Histórico recente</h2>
+          <Link href="/calendar" style={{ fontSize: '0.813rem', color: 'var(--violet)', fontWeight: 600, textDecoration: 'none' }}>
+            Ver calendário →
+          </Link>
+        </div>
         {registros.length === 0 ? (
           <p className={styles.mutedText}>Nenhum registro ainda.</p>
         ) : (
           <ul className={styles.historico}>
-            {registros.slice(0, 30).map(r => {
+            {registros.slice(0, 15).map(r => {
               const c = classificarDia(r)
+              const alerta = temAlertaRelacao(r)
               return (
-                <li
-                  key={r.id}
-                  className={styles.historicoItem}
+                <li key={r.id} className={styles.historicoItem}
                   onClick={() => setForm(f => ({ ...f, data: r.data }))}
-                  style={{ borderLeft: `4px solid ${COR[c]}` }}
-                >
+                  style={{ borderLeft: `4px solid ${COR[c]}` }}>
                   <span className={styles.historicoData}>{formatarData(r.data)}</span>
-                  <span style={{ color: COR[c], fontWeight: 600, fontSize: '0.875rem' }}>
-                    {labelClassificacao(c)}
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                    {alerta && <span title="Relação em dia fértil/pico">⚠️</span>}
+                    {r.relacao && !alerta && <span title="Houve relação">💑</span>}
+                    <span style={{ color: COR[c], fontWeight: 600, fontSize: '0.875rem' }}>
+                      {LABEL[c]}
+                    </span>
                   </span>
                 </li>
               )

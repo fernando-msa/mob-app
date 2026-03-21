@@ -1,0 +1,227 @@
+.page {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  padding: 1.25rem 1rem 2rem;
+}
+
+.card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--card);
+  border-radius: 1.5rem;
+  padding: 2rem 1.75rem;
+  box-shadow: 0 4px 32px rgba(124, 58, 237, 0.10);
+}
+
+/* Logo */
+.logo {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+.logoIcon { font-size: 2.5rem; }
+.logoTitle {
+  margin: 0.375rem 0 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--violet);
+  letter-spacing: -0.5px;
+}
+.logoSub {
+  margin: 0.25rem 0 0;
+  font-size: 0.813rem;
+  color: var(--muted);
+}
+
+/* Aviso clínico */
+.aviso {
+  display: flex;
+  gap: 0.625rem;
+  background: #faf5ff;
+  border: 1.5px solid #ede9fe;
+  border-radius: 0.875rem;
+  padding: 0.875rem 1rem;
+  margin-bottom: 1.375rem;
+}
+@media (prefers-color-scheme: dark) {
+  .aviso {
+    background: rgba(124, 58, 237, 0.08);
+    border-color: rgba(124, 58, 237, 0.25);
+  }
+}
+.avisoIcon { font-size: 1.125rem; flex-shrink: 0; margin-top: 1px; }
+.avisoText {
+  margin: 0;
+  font-size: 0.788rem;
+  color: var(--muted);
+  line-height: 1.55;
+}
+.avisoText strong { color: var(--violet); }
+
+/* Abas */
+.tabs {
+  display: flex;
+  background: var(--bg);
+  border-radius: 0.75rem;
+  padding: 3px;
+  margin-bottom: 1.375rem;
+  gap: 3px;
+}
+.tab {
+  flex: 1;
+  padding: 0.5rem;
+  border: none;
+  border-radius: 0.625rem;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.813rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.tabActive {
+  background: var(--card);
+  color: var(--violet);
+  box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+}
+
+/* Form */
+.form { display: flex; flex-direction: column; gap: 0; }
+
+.label {
+  display: block;
+  font-size: 0.775rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0.875rem 0 0.375rem;
+}
+.label:first-child { margin-top: 0; }
+
+.input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  border: 1.5px solid var(--border);
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 1rem;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+.input:focus { border-color: var(--violet); }
+
+.erro {
+  font-size: 0.813rem;
+  color: #ef4444;
+  margin: 0.5rem 0 0;
+  font-weight: 500;
+}
+
+.btnPrimary {
+  width: 100%;
+  padding: 0.875rem;
+  margin-top: 1.25rem;
+  border: none;
+  border-radius: 0.875rem;
+  background: var(--violet);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s, background 0.2s;
+}
+.btnPrimary:disabled { opacity: 0.6; cursor: not-allowed; }
+.btnPrimary:not(:disabled):hover { background: var(--violet-dark); }
+
+.linksRow {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1rem;
+}
+
+.linkBtn {
+  background: none;
+  border: none;
+  color: var(--violet);
+  font-size: 0.813rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  padding: 0;
+  transition: opacity 0.2s;
+}
+.linkBtn:hover { opacity: 0.75; text-decoration: underline; }
+
+.hint {
+  font-size: 0.763rem;
+  color: var(--muted);
+  text-align: center;
+  margin: 0.875rem 0 0;
+  line-height: 1.5;
+}
+
+/* Estado enviado / sucesso */
+.enviado {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+.enviado h2 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--fg);
+}
+.enviado p {
+  font-size: 0.875rem;
+  color: var(--muted);
+  line-height: 1.6;
+  margin: 0;
+}
+.enviado .linkBtn { margin-top: 0.75rem; }
+
+.sucesso {
+  text-align: center;
+  padding: 1rem 0;
+}
+.sucesso p {
+  font-size: 0.875rem;
+  color: var(--muted);
+  line-height: 1.6;
+  margin: 0.5rem 0 0;
+}
+
+/* Divisor */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1rem 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* Voltar */
+.voltarLink {
+  display: block;
+  text-align: center;
+  margin-top: 1.25rem;
+  font-size: 0.813rem;
+  color: var(--muted);
+  text-decoration: none;
+}
+.voltarLink:hover { color: var(--violet); }
