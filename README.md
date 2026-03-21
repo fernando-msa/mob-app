@@ -14,9 +14,7 @@ Autenticação segura · PWA instalável · Notificações push · Deploy gratui
 
 ---
 
-## ✨ Funcionalidades
-
-- **Autenticação completa** — login com e-mail+senha ou Magic Link, cadastro e recuperação de senha
+## ✨ Fun- **Autenticação completa** — login com e-mail+senha ou Magic Link, cadastro e recuperação de senha
 - **Onboarding personalizado** — nome e tema de cor na 1ª entrada; boas-vindas em toda sessão
 - **6 temas de cor** — Violeta, Rosa, Azul, Verde, Laranja e Teal
 - **Registro diário** — muco, sensação, sangramento, relação sexual e observações
@@ -30,6 +28,7 @@ Autenticação segura · PWA instalável · Notificações push · Deploy gratui
 - **Notificações push** — lembretes diários configuráveis
 - **Multi-usuário com RLS** — dados completamente isolados por conta
 - **Dark mode** — segue automaticamente a preferência do sistema
+- **E-mails personalizados** — templates HTML customizados para Magic Link e recuperação de senha
 
 ---
 
@@ -65,7 +64,7 @@ Este app é um **auxiliar de registro pessoal**. Para interpretação segura e p
    ```
 4. Em **Settings → API**, copie a **Project URL** e a **anon public key**
 
-### 2 — Templates de e-mail (recomendado)
+### 2 — Templates de e-mail (opcional, mas recomendado)
 
 Em **Authentication → Email Templates**:
 
@@ -74,7 +73,7 @@ Em **Authentication → Email Templates**:
 | Magic Link | `✨ Seu link de acesso — Método Billings` |
 | Reset Password | `🔑 Redefinir senha — Método Billings` |
 
-Cole os arquivos `supabase/email-magic-link.html` e `supabase/email-reset-senha.html`.
+Cole o conteúdo dos arquivos `supabase/email-magic-link.html` e `supabase/email-reset-senha.html` nos respectivos campos.
 
 ### 3 — VAPID Keys (notificações push)
 
@@ -84,8 +83,8 @@ npx web-push generate-vapid-keys
 
 ### 4 — Deploy na Vercel
 
-1. Faça push para o GitHub e importe o repositório na Vercel
-2. Adicione as **5 variáveis de ambiente**:
+1. Faça push do projeto para o GitHub e importe o repositório na Vercel
+2. Em **Environment Variables**, adicione as 5 variáveis de ambiente:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://SEU-PROJETO.supabase.co
@@ -176,9 +175,29 @@ mob-app/
 
 ## 🔐 Segurança
 
+- Login com e-mail+senha ou Magic Link — sem senha armazenada em texto plano
+- Fluxo completo de recuperação de senha via e-mail com link temporário
+- Row Level Security (RLS) no Supabase — cada usuária acessa apenas seus próprios dados
+- Rotas protegidas via middleware Next.js
+- Chaves VAPID para push notifications autenticadas
+
+```
+
+---
+
+## 🔐 Segurança
+
+<<<<<<< HEAD
 - Login sem senha armazenada em texto plano (hash bcrypt via Supabase)
 - Magic Link com expiração de 1 hora
 - Reset de senha com link temporário por e-mail
 - Row Level Security (RLS) — cada usuária acessa apenas seus dados
 - Rotas protegidas via middleware Next.js
 - Chaves VAPID autenticadas para push notifications
+=======
+- Login com e-mail+senha ou Magic Link — sem senha armazenada em texto plano
+- Fluxo completo de recuperação de senha via e-mail com link temporário
+- Row Level Security (RLS) no Supabase — cada usuário acessa apenas seus próprios dados
+- Rotas protegidas via middleware Next.js
+- Chaves VAPID para push notifications autenticadas
+>>>>>>> f9d800560032a2cf4b2b91fbf87e71deb0810049
